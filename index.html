@@ -1,14 +1,534 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>It Compiles (Sometimes)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0a0a0f;
+        --surface: #111118;
+        --surface2: #18181f;
+        --border: #2a2a38;
+        --accent: #c8ff00;
+        --accent2: #ff6b35;
+        --text: #e8e8f0;
+        --muted: #7070a0;
+        --coming-soon: #3a3a50;
+      }
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Syne', sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* ── NOISE OVERLAY ── */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 1000;
+        opacity: 0.5;
+      }
+
+      /* ── HEADER ── */
+      header {
+        padding: 80px 60px 60px;
+        border-bottom: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+        animation: fadeDown 0.8s ease both;
+      }
+
+      header::after {
+        content: '';
+        position: absolute;
+        top: -40px; right: -60px;
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(200,255,0,0.07) 0%, transparent 70%);
+        pointer-events: none;
+      }
+
+      .header-tag {
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        color: var(--accent);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        font-size: clamp(2.8rem, 6vw, 5rem);
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+      }
+
+      h1 em {
+        font-style: italic;
+        color: var(--accent);
+      }
+
+      .header-sub {
+        margin-top: 16px;
+        font-family: 'Space Mono', monospace;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      /* ── MAIN LAYOUT ── */
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 60px 60px 100px;
+        display: flex;
+        flex-direction: column;
+        gap: 48px;
+      }
+
+      /* ── ASSIGNMENT CARD ── */
+      .assignment {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--surface);
+        overflow: hidden;
+        animation: fadeUp 0.7s ease both;
+      }
+
+      .assignment:nth-child(1) { animation-delay: 0.1s; }
+      .assignment:nth-child(2) { animation-delay: 0.25s; }
+      .assignment:nth-child(3) { animation-delay: 0.4s; }
+
+      .assignment-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 28px 32px;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface2);
+      }
+
+      .assignment-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 2px;
+        color: var(--accent);
+        background: rgba(200,255,0,0.08);
+        border: 1px solid rgba(200,255,0,0.2);
+        padding: 4px 10px;
+        border-radius: 2px;
+        white-space: nowrap;
+      }
+
+      .assignment-label.coming {
+        color: var(--muted);
+        background: transparent;
+        border-color: var(--border);
+      }
+
+      .assignment-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: var(--text);
+      }
+
+      .assignment-status {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+      }
+
+      .dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 8px var(--accent);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .dot.dim { background: var(--coming-soon); box-shadow: none; animation: none; }
+
+      .status-text { color: var(--accent); }
+      .status-text.dim { color: var(--muted); }
+
+      /* ── DELIVERABLES ── */
+      .deliverables {
+        padding: 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .deliverable {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .deliverable-icon {
+        width: 36px; height: 36px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        font-size: 14px;
+        background: var(--surface2);
+        color: var(--muted);
+      }
+
+      .deliverable-info {
+        flex: 1;
+      }
+
+      .deliverable-name {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      /* ── PDF EMBED ── */
+      .pdf-wrapper {
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .pdf-wrapper iframe {
+        display: block;
+        width: 100%;
+        height: 500px;
+        border: none;
+        background: #1a1a22;
+      }
+
+      /* ── BUTTONS ── */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 1px;
+        text-decoration: none;
+        border-radius: 3px;
+        border: 1px solid;
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #0a0a0f;
+        border-color: var(--accent);
+        font-weight: 700;
+      }
+
+      .btn-primary:hover {
+        background: transparent;
+        color: var(--accent);
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: var(--text);
+        border-color: var(--border);
+      }
+
+      .btn-secondary:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* ── VIDEO LINK ── */
+      .video-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        text-decoration: none;
+        color: var(--text);
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        background: var(--surface2);
+        transition: all 0.2s ease;
+        word-break: break-all;
+      }
+
+      .video-link:hover {
+        border-color: var(--accent2);
+        color: var(--accent2);
+      }
+
+      .video-icon {
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+
+      /* ── COMING SOON ── */
+      .coming-soon-body {
+        padding: 60px 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+        color: var(--muted);
+      }
+
+      .coming-soon-glyph {
+        font-size: 2.5rem;
+        opacity: 0.3;
+        margin-bottom: 8px;
+      }
+
+      .coming-soon-body h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+      }
+
+      .coming-soon-body p {
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        color: var(--coming-soon);
+        max-width: 300px;
+        line-height: 1.7;
+      }
+
+      /* ── FOOTER ── */
+      footer {
+        border-top: 1px solid var(--border);
+        padding: 28px 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      /* ── ANIMATIONS ── */
+      @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-18px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.4; }
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 700px) {
+        header { padding: 50px 24px 40px; }
+        main   { padding: 40px 24px 80px; }
+        .assignment-header { flex-wrap: wrap; gap: 12px; }
+        .assignment-status { margin-left: 0; }
+        .deliverables { padding: 24px; }
+        footer { padding: 24px; flex-direction: column; gap: 8px; text-align: center; }
+      }
+    </style>
   </head>
   <body>
-    <p>A1 Report: </p>
-    <iframe src="https://spy772.github.io/It-Compiles-Sometimes/A1 - Conceptual Architecture Report - It Compiles (Sometimes)-2.pdf" width="100%" height="600px" style="border: none;" title="Embedded PDF Viewer"></iframe>
-    <p>A1 PPTX: </p>
-    <a href="https://spy772.github.io/It-Compiles-Sometimes/Gemini CLI - Group 5(1).pptx">Download PowerPoint</a>
-    <p>A1 Video Presentation: </p>
-    <a>https://youtu.be/SIq0XicHPU8</a>
+
+    <header>
+      <p class="header-tag">// Group 5 &mdash; Course Project</p>
+      <h1>It Compiles<br /><em>(Sometimes)</em></h1>
+      <p class="header-sub">Deliverables &amp; Documentation &mdash; Assignments 1 &ndash; 3</p>
+    </header>
+
+    <main>
+
+      <!-- ═══════════════ A1 ═══════════════ -->
+      <section class="assignment" id="a1">
+        <div class="assignment-header">
+          <span class="assignment-label">A1</span>
+          <span class="assignment-title">Conceptual Architecture</span>
+          <span class="assignment-status">
+            <span class="dot"></span>
+            <span class="status-text">Submitted</span>
+          </span>
+        </div>
+
+        <div class="deliverables">
+
+          <!-- Report -->
+          <div class="deliverable">
+            <div class="deliverable-icon">📄</div>
+            <div class="deliverable-info">
+              <p class="deliverable-name">Report &mdash; PDF</p>
+              <div class="pdf-wrapper">
+                <iframe
+                  src="https://spy772.github.io/It-Compiles-Sometimes/A1 - Conceptual Architecture Report - It Compiles (Sometimes)-2.pdf"
+                  title="A1 Conceptual Architecture Report"
+                ></iframe>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slides -->
+          <div class="deliverable">
+            <div class="deliverable-icon">📊</div>
+            <div class="deliverable-info">
+              <p class="deliverable-name">Presentation &mdash; PPTX</p>
+              <a
+                class="btn btn-primary"
+                href="https://spy772.github.io/It-Compiles-Sometimes/Gemini CLI - Group 5(1).pptx"
+                download
+              >
+                ↓ Download Slides
+              </a>
+            </div>
+          </div>
+
+          <!-- Video -->
+          <div class="deliverable">
+            <div class="deliverable-icon">🎬</div>
+            <div class="deliverable-info">
+              <p class="deliverable-name">Video Presentation</p>
+              <a
+                class="video-link"
+                href="https://youtu.be/SIq0XicHPU8"
+                target="_blank"
+                rel="noopener"
+              >
+                <span class="video-icon">▶</span>
+                https://youtu.be/SIq0XicHPU8
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ═══════════════ A2 ═══════════════ -->
+      <!--
+        TO ADD A2 FILES:
+        1. Replace the <div class="coming-soon-body">…</div> block below with your deliverables
+        2. Change the label span from class="assignment-label coming" to class="assignment-label"
+        3. Change the status dot from class="dot dim" to class="dot" and update the text
+        4. Use the same .deliverable structure shown in A1 above
+      -->
+      <section class="assignment" id="a2">
+        <div class="assignment-header">
+          <span class="assignment-label coming">A2</span>
+          <span class="assignment-title">Assignment 2</span>
+          <span class="assignment-status">
+            <span class="dot"></span>
+            <span class="status-text dim">Submitted</span>
+          </span>
+        </div>
+
+        <div class="deliverables">
+
+          <!-- Report -->
+          <div class="deliverable">
+            <div class="deliverable-icon">📄</div>
+            <div class="deliverable-info">
+              <p class="deliverable-name">Report &mdash; PDF</p>
+              <div class="pdf-wrapper">
+                <iframe
+                  src="https://spy772.github.io/It-Compiles-Sometimes/A2 - Concrete Architecture Report - It Compiles (Sometimes).pdf"
+                  title="A1 Conceptual Architecture Report"
+                ></iframe>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slides -->
+          <div class="deliverable">
+            <div class="deliverable-icon">📊</div>
+            <div class="deliverable-info">
+              <p class="deliverable-name">Presentation &mdash; PPTX</p>
+              <a
+                class="btn btn-primary"
+                href="https://spy772.github.io/A2.pdf"
+                download
+              >
+                ↓ Download Slides
+              </a>
+            </div>
+          </div>
+
+          <!-- Video -->
+          <div class="deliverable">
+            <div class="deliverable-icon">🎬</div>
+            <div class="deliverable-info">
+              <p class="deliverable-name">Video Presentation</p>
+              <a
+                class="video-link"
+                href="https://drive.google.com/file/d/1_46OENnbfo9LgYGBbC8CIQpdUqwu_4px/view?usp=sharing"
+                target="_blank"
+                rel="noopener"
+              >
+                <span class="video-icon">▶</span>
+                https://drive.google.com/file/d/1_46OENnbfo9LgYGBbC8CIQpdUqwu_4px/view?usp=sharing
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ═══════════════ A3 ═══════════════ -->
+      <!--
+        TO ADD A3 FILES:
+        Same steps as A2 above — replace the coming-soon-body block,
+        update the label and status, and add your deliverables.
+      -->
+      <section class="assignment" id="a3">
+        <div class="assignment-header">
+          <span class="assignment-label coming">A3</span>
+          <span class="assignment-title">Assignment 3</span>
+          <span class="assignment-status">
+            <span class="dot dim"></span>
+            <span class="status-text dim">Coming Soon</span>
+          </span>
+        </div>
+
+        <div class="coming-soon-body">
+          <div class="coming-soon-glyph">⬡</div>
+          <h3>Not yet available</h3>
+          <p>A3 deliverables will appear here once the assignment is submitted.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>
+      <span>It Compiles (Sometimes) &mdash; Group 5</span>
+      <span>// course project docs</span>
+    </footer>
+
   </body>
 </html>
